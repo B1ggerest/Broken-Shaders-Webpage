@@ -7,7 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
@@ -278,6 +278,7 @@
                 logoutButton.classList.toggle('hidden', !isLoggedIn);
                 portalNavLink.classList.toggle('hidden', !isLoggedIn);
                 adminNavLink.classList.toggle('hidden', !isLoggedIn || !isAdmin);
+                document.getElementById('upload-container').classList.toggle('hidden', !isAdmin);
             }
 
             function logout() {
@@ -400,7 +401,8 @@
                 const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
                 
                 if (!file.isLink && imageExtensions.includes(extension)) {
-                    return `<img src="${file.fileURL}" alt="${file.fileName}" class="w-10 h-10 object-cover rounded-md mr-3">`;
+                    // For private R2, we can't just link to the URL.
+                    // This space could be used for a placeholder or a future secure thumbnail fetcher.
                 }
                 
                 const iconPath = file.isLink 
@@ -417,17 +419,32 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    filesList.innerHTML = result.files.map(file => `
-                        <div class="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded">
-                            <a href="${file.fileURL}" target="_blank" rel="noopener noreferrer" class="flex items-center min-w-0">
-                                ${renderFilePreview(file)}
-                                <span class="truncate">${file.fileName}</span>
-                            </a>
-                            ${isAdmin ? `<button class="delete-file-btn text-gray-500 hover:text-red-500 flex-shrink-0 ml-4" data-file-id="${file.id}" data-file-url="${file.fileURL}">Delete</button>` : ''}
-                        </div>
-                    `).join('');
+                    filesList.innerHTML = result.files.map(file => {
+                        const deleteButton = isAdmin ? `<button class="delete-file-btn text-gray-500 hover:text-red-500 flex-shrink-0 ml-4" data-file-id="${file.id}" data-file-key="${file.fileKey || ''}">Delete</button>` : '';
+                        
+                        if (file.isLink) {
+                            return `
+                                <div class="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded">
+                                    <a href="${file.fileKey}" target="_blank" rel="noopener noreferrer" class="flex items-center min-w-0">
+                                        ${renderFilePreview(file)}
+                                        <span class="truncate">${file.fileName}</span>
+                                    </a>
+                                    ${deleteButton}
+                                </div>`;
+                        } else {
+                            return `
+                                <div class="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded">
+                                    <button class="file-download-btn flex items-center min-w-0 text-left" data-file-key="${file.fileKey}" data-file-name="${file.fileName}">
+                                        ${renderFilePreview(file)}
+                                        <span class="truncate">${file.fileName}</span>
+                                    </button>
+                                    ${deleteButton}
+                                </div>`;
+                        }
+                    }).join('');
                 }
             }
+
             if(uploadForm) {
                 uploadForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -461,14 +478,48 @@
             
             if(filesList) {
                 filesList.addEventListener('click', async (e) => {
-                    if (e.target.classList.contains('delete-file-btn')) {
-                        const fileId = e.target.dataset.fileId;
-                        const fileURL = e.target.dataset.fileUrl;
-                        if (confirm('Are you sure you want to delete this file?')) {
-                            const response = await fetch(`${FILE_WORKER_URL}?action=delete`, {
+                    const downloadBtn = e.target.closest('.file-download-btn');
+                    const deleteBtn = e.target.closest('.delete-file-btn');
+
+                    if (downloadBtn) {
+                        const fileKey = downloadBtn.dataset.fileKey;
+                        const fileName = downloadBtn.dataset.fileName;
+                        downloadBtn.innerHTML = `Downloading...`;
+
+                        try {
+                            const response = await fetch(`${FILE_WORKER_URL}?action=get&key=${fileKey}`, {
+                                headers: { 'Authorization': `Bearer ${userToken}` }
+                            });
+                            if (!response.ok) throw new Error('Download failed.');
+                            
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = fileName;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            a.remove();
+                        } catch (error) {
+                            console.error('Download error:', error);
+                            alert('Download failed. Please try again.');
+                        } finally {
+                            // Re-render the button's original content
+                            const file = { fileName: fileName, isLink: false };
+                            downloadBtn.innerHTML = `${renderFilePreview(file)}<span class="truncate">${fileName}</span>`;
+                        }
+                    }
+
+                    if (deleteBtn) {
+                        const fileId = deleteBtn.dataset.fileId;
+                        const fileKey = deleteBtn.dataset.fileKey;
+                        if (confirm('Are you sure you want to delete this resource?')) {
+                             const response = await fetch(`${FILE_WORKER_URL}?action=delete`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
-                                body: JSON.stringify({ fileId, fileURL })
+                                body: JSON.stringify({ fileId, fileKey })
                             });
                             const result = await response.json();
                             if (result.success) refreshFileList();
