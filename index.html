@@ -44,6 +44,8 @@
         body:not(.sidebar-closed) .sidebar-toggle-button { transform: translateX(11rem); }
         .page { display: none; }
         .page.active { display: flex; }
+        .nav-link { display: block; text-lg; color: #D1D5DB; }
+        .nav-link:hover { color: #FFFFFF; padding-left: 0.5rem; }
     </style>
 </head>
 <body class="sidebar-closed">
@@ -52,10 +54,11 @@
     <nav id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-black/30 backdrop-blur-sm border-r border-purple-500/20 z-20 p-6">
         <div class="logo-font text-3xl text-purple-300 text-glow">Broken Shaders</div>
         <ul class="mt-12 space-y-4">
-            <li><a href="#home" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Home</a></li>
-            <li><a href="#register" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Register</a></li>
-            <li><a href="#login" id="login-nav-link" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Member Login</a></li>
-            <li><a href="#portal" id="portal-nav-link" class="nav-link hidden text-lg text-purple-300 hover:text-white hover:pl-2 transition-all duration-300">Members Portal</a></li>
+            <li><a href="#home" class="nav-link">Home</a></li>
+            <li><a href="#register" class="nav-link">Register</a></li>
+            <li><a href="#login" id="login-nav-link" class="nav-link">Member Login</a></li>
+            <li><a href="#portal" id="portal-nav-link" class="nav-link hidden">Members Portal</a></li>
+            <li><a href="#admin" id="admin-nav-link" class="nav-link hidden text-yellow-400">Admin Panel</a></li>
         </ul>
         <div class="absolute bottom-6">
              <button id="logout-button" class="hidden text-gray-400 hover:text-white transition-colors">Logout</button>
@@ -68,7 +71,7 @@
 
         <!-- Home Page -->
         <section id="home" class="page active min-h-screen flex-col items-center justify-center p-4">
-            <h1 class="logo-font text-6xl sm:text-8xl md:text-9xl text-purple-300 text-glow text-center leading-none">Broken Shaders</h1>
+            <h1 class="logo-font text-6xl sm:text-8xl md:text-9xl text-purple-300 text-glow text-center leading-none whitespace-nowrap">Broken Shaders</h1>
             <p class="mt-4 text-lg sm:text-xl md:text-2xl text-purple-200 subtitle-glow tracking-widest text-center">VRChat VFX Animators</p>
         </section>
 
@@ -124,62 +127,196 @@
             <p class="mt-4 text-xl text-purple-200 subtitle-glow">This is the protected members-only area.</p>
         </section>
 
+        <!-- NEW Admin Portal Page -->
+        <section id="admin" class="page min-h-screen flex-col items-center justify-center p-4">
+            <div class="w-full max-w-4xl bg-black/30 backdrop-blur-sm border border-yellow-500/20 rounded-lg p-8 z-20">
+                <h1 class="logo-font text-5xl text-yellow-300 text-glow text-center">Admin Panel</h1>
+                <div class="mt-8">
+                    <h2 class="text-2xl text-gray-300">Manage Registration Codes</h2>
+                    <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
+                    <div id="admin-message-box" class="mt-2 text-sm"></div>
+                    <div class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
+                        <table class="min-w-full">
+                            <thead class="sticky top-0 bg-gray-900">
+                                <tr>
+                                    <th class="p-2 text-left">Code</th>
+                                    <th class="p-2 text-left">Status</th>
+                                    <th class="p-2 text-left">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="codes-table-body">
+                                <!-- Codes will be populated here by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- IMPORTANT: CONFIGURE YOUR WORKER URLS HERE ---
-            const REGISTRATION_WORKER_URL = 'https://your-registration-worker.your-name.workers.dev';
-            const LOGIN_WORKER_URL = 'https://your-login-worker.your-name.workers.dev';
+            const REGISTRATION_WORKER_URL = 'https://broken-shaders-secure-auth.lolbiggerestlol.workers.dev';
+            const LOGIN_WORKER_URL = 'https://brokenshaderslogin.lolbiggerestlol.workers.dev';
+            const ADMIN_WORKER_URL = 'https://broken-shaders-admin-handler.lolbiggerestlol.workers.dev'; // Add your new admin worker URL
             // ----------------------------------------------------
 
             const pages = document.querySelectorAll('.page');
-            const loginNavLink = document.getElementById('login-nav-link');
-            const portalNavLink = document.getElementById('portal-nav-link');
-            const logoutButton = document.getElementById('logout-button');
+            let userToken = sessionStorage.getItem('jwt');
 
-            // --- Sidebar Logic ---
+            function parseJwt(token) {
+                try {
+                    return JSON.parse(atob(token.split('.')[1]));
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            async function secureFetch(url, action, payload = {}) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`
+                    },
+                    body: JSON.stringify({ action, payload })
+                });
+                if (response.status === 403) {
+                    logout();
+                    return { success: false, message: 'Session expired. Please log in again.' };
+                }
+                return response.json();
+            }
+
+            const createCodeBtn = document.getElementById('create-code-btn');
+            const codesTableBody = document.getElementById('codes-table-body');
+            const adminMessageBox = document.getElementById('admin-message-box');
+
+            async function refreshCodesList() {
+                const result = await secureFetch(ADMIN_WORKER_URL, 'LIST_CODES');
+                if (result.success) {
+                    codesTableBody.innerHTML = result.codes.map(code => `
+                        <tr>
+                            <td class="p-2 font-mono">${code.id}</td>
+                            <td class="p-2 ${code.isUsed ? 'text-red-400' : 'text-green-400'}">
+                                ${code.isUsed ? 'Used' : 'Available'}
+                            </td>
+                            <td class="p-2">
+                                <button class="delete-code-btn text-gray-400 hover:text-red-500" data-code-id="${code.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            createCodeBtn.addEventListener('click', async () => {
+                const result = await secureFetch(ADMIN_WORKER_URL, 'CREATE_CODE');
+                adminMessageBox.textContent = result.message;
+                if (result.success) {
+                    refreshCodesList();
+                }
+            });
+
+            codesTableBody.addEventListener('click', async (e) => {
+                if (e.target.classList.contains('delete-code-btn')) {
+                    const codeId = e.target.dataset.codeId;
+                    if (confirm(`Are you sure you want to delete code ${codeId}?`)) {
+                        const result = await secureFetch(ADMIN_WORKER_URL, 'DELETE_CODE', { codeId });
+                        adminMessageBox.textContent = result.message;
+                        if (result.success) {
+                            refreshCodesList();
+                        }
+                    }
+                }
+            });
+            
+            function updateNavForLoginState() {
+                const loginNavLink = document.getElementById('login-nav-link');
+                const portalNavLink = document.getElementById('portal-nav-link');
+                const adminNavLink = document.getElementById('admin-nav-link');
+                const logoutButton = document.getElementById('logout-button');
+                
+                const payload = userToken ? parseJwt(userToken) : null;
+                const isLoggedIn = !!payload;
+
+                loginNavLink.classList.toggle('hidden', isLoggedIn);
+                logoutButton.classList.toggle('hidden', !isLoggedIn);
+                portalNavLink.classList.toggle('hidden', !isLoggedIn);
+                adminNavLink.classList.toggle('hidden', !isLoggedIn || !payload.isAdmin);
+            }
+
+            function logout() {
+                sessionStorage.removeItem('jwt');
+                userToken = null;
+                updateNavForLoginState();
+                window.location.hash = '#home';
+            }
+
+            const loginForm = document.getElementById('login-form');
+            const loginMessageBox = document.getElementById('login-message-box');
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    email: document.getElementById('login-email').value,
+                    password: document.getElementById('login-password').value,
+                };
+
+                loginMessageBox.textContent = 'Signing in...';
+                loginMessageBox.className = 'mt-4 text-center text-sm text-yellow-400';
+
+                try {
+                    const response = await fetch(LOGIN_WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        loginMessageBox.className = 'mt-4 text-center text-sm text-green-400';
+                        loginMessageBox.textContent = 'Success! Redirecting...';
+                        userToken = result.token;
+                        sessionStorage.setItem('jwt', userToken);
+                        updateNavForLoginState();
+                        setTimeout(() => window.location.hash = '#portal', 1000);
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    loginMessageBox.className = 'mt-4 text-center text-sm text-red-400';
+                    loginMessageBox.textContent = error.message || 'An error occurred.';
+                }
+            });
+
+            function showPage(hash) {
+                const targetId = hash ? hash.substring(1) : 'home';
+                const payload = userToken ? parseJwt(userToken) : null;
+
+                if ((targetId === 'portal' || targetId === 'admin') && !payload) {
+                    window.location.hash = '#login'; return;
+                }
+                if (targetId === 'admin' && (!payload || !payload.isAdmin)) {
+                    window.location.hash = '#portal'; return;
+                }
+                if (targetId === 'admin') {
+                    refreshCodesList();
+                }
+                
+                pages.forEach(page => {
+                    page.classList.toggle('active', page.id === targetId);
+                });
+            }
+            
+            // --- Initial Setup and other event listeners ---
             const toggleButton = document.createElement('button');
             toggleButton.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
             toggleButton.className = 'sidebar-toggle-button text-purple-300 hover:text-white';
             toggleButton.addEventListener('click', () => document.body.classList.toggle('sidebar-closed'));
             document.body.appendChild(toggleButton);
 
-            // --- Page Routing Logic ---
-            function showPage(hash) {
-                // Use the hash or default to #home
-                const targetId = hash ? hash.substring(1) : 'home';
-                
-                // Protection for members portal
-                if (targetId === 'portal' && !sessionStorage.getItem('isLoggedIn')) {
-                    window.location.hash = '#login'; // Redirect to login if not authenticated
-                    return;
-                }
-
-                pages.forEach(page => {
-                    page.classList.toggle('active', page.id === targetId);
-                });
-            }
-
-            // --- Authentication State Management ---
-            function updateNavForLoginState() {
-                const isLoggedIn = !!sessionStorage.getItem('isLoggedIn');
-                loginNavLink.classList.toggle('hidden', isLoggedIn);
-                portalNavLink.classList.toggle('hidden', !isLoggedIn);
-                logoutButton.classList.toggle('hidden', !isLoggedIn);
-            }
-
-            // --- Event Listeners ---
-            // The browser's default behavior for clicking an <a href="#..."> link
-            // is to change the hash, which automatically triggers the 'hashchange' event.
-            // We only need to listen for that single event.
             window.addEventListener('hashchange', () => showPage(window.location.hash));
             
-            logoutButton.addEventListener('click', () => {
-                sessionStorage.removeItem('isLoggedIn');
-                updateNavForLoginState();
-                window.location.hash = '#home';
-            });
+            document.getElementById('logout-button').addEventListener('click', logout);
 
             // --- Registration Form Logic ---
             const regForm = document.getElementById('register-form');
@@ -215,42 +352,7 @@
                 }
             });
 
-            // --- Login Form Logic ---
-            const loginForm = document.getElementById('login-form');
-            const loginMessageBox = document.getElementById('login-message-box');
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const data = {
-                    email: document.getElementById('login-email').value,
-                    password: document.getElementById('login-password').value,
-                };
-
-                loginMessageBox.textContent = 'Signing in...';
-                loginMessageBox.className = 'mt-4 text-center text-sm text-yellow-400';
-
-                try {
-                    const response = await fetch(LOGIN_WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data),
-                    });
-                    const result = await response.json();
-                    if (response.ok) {
-                        loginMessageBox.className = 'mt-4 text-center text-sm text-green-400';
-                        loginMessageBox.textContent = 'Success! Redirecting...';
-                        sessionStorage.setItem('isLoggedIn', 'true');
-                        updateNavForLoginState();
-                        setTimeout(() => window.location.hash = '#portal', 1000);
-                    } else {
-                        throw new Error(result.message);
-                    }
-                } catch (error) {
-                    loginMessageBox.className = 'mt-4 text-center text-sm text-red-400';
-                    loginMessageBox.textContent = error.message || 'An error occurred.';
-                }
-            });
-
-            // --- Initial Page Load ---
+            // Initial Page Load
             showPage(window.location.hash);
             updateNavForLoginState();
         });
