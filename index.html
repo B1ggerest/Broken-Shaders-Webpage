@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broken Shaders - VRChat VFX Animators</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            color: #fff;
+            overflow: hidden;
+        }
+        .logo-font { font-family: 'MedievalSharp', cursive; }
+        .text-glow {
+            text-shadow: 0 0 8px rgba(192, 132, 252, 0.6), 
+                         0 0 20px rgba(168, 85, 247, 0.5), 
+                         0 0 40px rgba(147, 51, 234, 0.4);
+        }
+        .flare {
+            position: absolute; top: 50%; left: 50%; width: 100vw; height: 100vh;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(126, 34, 206, 0.15) 0%, rgba(126, 34, 206, 0) 60%);
+            animation: pulse 10s infinite ease-in-out; z-index: -1; 
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.95); opacity: 0.7; }
+            50% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+        }
+        #sidebar { transform: translateX(0); transition: transform 0.3s ease-in-out; }
+        #main-container { margin-left: 16rem; transition: margin-left 0.3s ease-in-out; }
+        body.sidebar-closed #sidebar { transform: translateX(-100%); }
+        body.sidebar-closed #main-container { margin-left: 0; }
+        .sidebar-toggle-button {
+            position: fixed; top: 1.5rem; left: 1.5rem; z-index: 30;
+            transform: translateX(0); transition: transform 0.3s ease-in-out;
+        }
+        body:not(.sidebar-closed) .sidebar-toggle-button { transform: translateX(11rem); }
+        .page { display: none; }
+        .page.active { display: flex; }
+    </style>
+</head>
+<body class="sidebar-closed">
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-black/30 backdrop-blur-sm border-r border-purple-500/20 z-20 p-6">
+        <div class="logo-font text-3xl text-purple-300 text-glow">Broken Shaders</div>
+        <ul class="mt-12 space-y-4">
+            <li><a href="#home" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Home</a></li>
+            <li><a href="#register" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Register</a></li>
+            <li><a href="#login" id="login-nav-link" class="nav-link block text-lg text-gray-300 hover:text-white hover:pl-2 transition-all duration-300">Member Login</a></li>
+            <li><a href="#portal" id="portal-nav-link" class="nav-link hidden text-lg text-purple-300 hover:text-white hover:pl-2 transition-all duration-300">Members Portal</a></li>
+        </ul>
+        <div class="absolute bottom-6">
+             <button id="logout-button" class="hidden text-gray-400 hover:text-white transition-colors">Logout</button>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main-container" class="relative min-h-screen z-10">
+        <div class="flare"></div>
+
+        <!-- Home Page -->
+        <section id="home" class="page active min-h-screen flex-col items-center justify-center p-4">
+            <h1 class="logo-font text-6xl sm:text-8xl md:text-9xl text-purple-300 text-glow text-center leading-none">Broken Shaders</h1>
+            <p class="mt-4 text-lg sm:text-xl md:text-2xl text-purple-200 subtitle-glow tracking-widest text-center">VRChat VFX Animators</p>
+        </section>
+
+        <!-- Registration Page -->
+        <section id="register" class="page min-h-screen flex-col items-center justify-center p-4">
+            <div class="w-full max-w-md bg-black/30 backdrop-blur-sm border border-purple-500/20 rounded-lg p-8 z-20">
+                <h1 class="logo-font text-5xl text-purple-300 text-glow text-center">Create Account</h1>
+                <form id="register-form" class="mt-8 space-y-6">
+                    <div>
+                        <label for="reg-email" class="text-sm font-medium text-gray-300">Email</label>
+                        <input id="reg-email" type="email" required class="mt-1 block w-full px-3 py-2 bg-gray-900/50 border border-purple-500/30 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label for="reg-password" class="text-sm font-medium text-gray-300">Password (min. 8 characters)</label>
+                        <input id="reg-password" type="password" required class="mt-1 block w-full px-3 py-2 bg-gray-900/50 border border-purple-500/30 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label for="reg-code" class="text-sm font-medium text-gray-300">Registration Code</label>
+                        <input id="reg-code" type="text" required class="mt-1 block w-full px-3 py-2 bg-gray-900/50 border border-purple-500/30 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 transition-colors">Register</button>
+                    </div>
+                </form>
+                <div id="register-message-box" class="mt-4 text-center text-sm"></div>
+            </div>
+        </section>
+
+        <!-- Login Page -->
+        <section id="login" class="page min-h-screen flex-col items-center justify-center p-4">
+            <div class="w-full max-w-md bg-black/30 backdrop-blur-sm border border-purple-500/20 rounded-lg p-8 z-20">
+                <h1 class="logo-font text-5xl text-purple-300 text-glow text-center">Member Login</h1>
+                <form id="login-form" class="mt-8 space-y-6">
+                    <div>
+                        <label for="login-email" class="text-sm font-medium text-gray-300">Email</label>
+                        <input id="login-email" type="email" required class="mt-1 block w-full px-3 py-2 bg-gray-900/50 border border-purple-500/30 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <label for="login-password" class="text-sm font-medium text-gray-300">Password</label>
+                        <input id="login-password" type="password" required class="mt-1 block w-full px-3 py-2 bg-gray-900/50 border border-purple-500/30 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-purple-500 transition-colors">Sign in</button>
+                    </div>
+                </form>
+                <div id="login-message-box" class="mt-4 text-center text-sm"></div>
+            </div>
+        </section>
+
+        <!-- Members Portal Page (Protected) -->
+        <section id="portal" class="page min-h-screen flex-col items-center justify-center p-4">
+            <h1 class="logo-font text-6xl text-purple-300 text-glow text-center">Welcome, Member</h1>
+            <p class="mt-4 text-xl text-purple-200 subtitle-glow">This is the protected members-only area.</p>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- IMPORTANT: CONFIGURE YOUR WORKER URLS HERE ---
+            const REGISTRATION_WORKER_URL = 'https://your-registration-worker.your-name.workers.dev';
+            const LOGIN_WORKER_URL = 'https://your-login-worker.your-name.workers.dev';
+            // ----------------------------------------------------
+
+            const pages = document.querySelectorAll('.page');
+            const loginNavLink = document.getElementById('login-nav-link');
+            const portalNavLink = document.getElementById('portal-nav-link');
+            const logoutButton = document.getElementById('logout-button');
+
+            // --- Sidebar Logic ---
+            const toggleButton = document.createElement('button');
+            toggleButton.innerHTML = `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`;
+            toggleButton.className = 'sidebar-toggle-button text-purple-300 hover:text-white';
+            toggleButton.addEventListener('click', () => document.body.classList.toggle('sidebar-closed'));
+            document.body.appendChild(toggleButton);
+
+            // --- Page Routing Logic ---
+            function showPage(hash) {
+                // Use the hash or default to #home
+                const targetId = hash ? hash.substring(1) : 'home';
+                
+                // Protection for members portal
+                if (targetId === 'portal' && !sessionStorage.getItem('isLoggedIn')) {
+                    window.location.hash = '#login'; // Redirect to login if not authenticated
+                    return;
+                }
+
+                pages.forEach(page => {
+                    page.classList.toggle('active', page.id === targetId);
+                });
+            }
+
+            // --- Authentication State Management ---
+            function updateNavForLoginState() {
+                const isLoggedIn = !!sessionStorage.getItem('isLoggedIn');
+                loginNavLink.classList.toggle('hidden', isLoggedIn);
+                portalNavLink.classList.toggle('hidden', !isLoggedIn);
+                logoutButton.classList.toggle('hidden', !isLoggedIn);
+            }
+
+            // --- Event Listeners ---
+            // The browser's default behavior for clicking an <a href="#..."> link
+            // is to change the hash, which automatically triggers the 'hashchange' event.
+            // We only need to listen for that single event.
+            window.addEventListener('hashchange', () => showPage(window.location.hash));
+            
+            logoutButton.addEventListener('click', () => {
+                sessionStorage.removeItem('isLoggedIn');
+                updateNavForLoginState();
+                window.location.hash = '#home';
+            });
+
+            // --- Registration Form Logic ---
+            const regForm = document.getElementById('register-form');
+            const regMessageBox = document.getElementById('register-message-box');
+            regForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    email: document.getElementById('reg-email').value,
+                    password: document.getElementById('reg-password').value,
+                    registrationCode: document.getElementById('reg-code').value,
+                };
+                
+                regMessageBox.textContent = 'Registering...';
+                regMessageBox.className = 'mt-4 text-center text-sm text-yellow-400';
+
+                try {
+                    const response = await fetch(REGISTRATION_WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        regMessageBox.className = 'mt-4 text-center text-sm text-green-400';
+                        regMessageBox.textContent = 'Success! You can now log in.';
+                        regForm.reset();
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    regMessageBox.className = 'mt-4 text-center text-sm text-red-400';
+                    regMessageBox.textContent = error.message || 'An error occurred.';
+                }
+            });
+
+            // --- Login Form Logic ---
+            const loginForm = document.getElementById('login-form');
+            const loginMessageBox = document.getElementById('login-message-box');
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const data = {
+                    email: document.getElementById('login-email').value,
+                    password: document.getElementById('login-password').value,
+                };
+
+                loginMessageBox.textContent = 'Signing in...';
+                loginMessageBox.className = 'mt-4 text-center text-sm text-yellow-400';
+
+                try {
+                    const response = await fetch(LOGIN_WORKER_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        loginMessageBox.className = 'mt-4 text-center text-sm text-green-400';
+                        loginMessageBox.textContent = 'Success! Redirecting...';
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        updateNavForLoginState();
+                        setTimeout(() => window.location.hash = '#portal', 1000);
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (error) {
+                    loginMessageBox.className = 'mt-4 text-center text-sm text-red-400';
+                    loginMessageBox.textContent = error.message || 'An error occurred.';
+                }
+            });
+
+            // --- Initial Page Load ---
+            showPage(window.location.hash);
+            updateNavForLoginState();
+        });
+    </script>
+</body>
+</html>
