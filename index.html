@@ -7,7 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     
     <style>
@@ -125,30 +125,9 @@
         <section id="portal" class="page min-h-screen flex-col items-center justify-center p-4">
             <div class="w-full max-w-4xl bg-black/30 backdrop-blur-sm border rounded-lg p-8 z-20">
                 <h1 class="logo-font text-5xl text-purple-300 text-glow text-center">Member Resources</h1>
-                
-                <!-- Admin-only Upload Form -->
-                <div id="upload-container" class="hidden mt-8 p-4 border border-purple-500/30 rounded-lg">
-                    <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
-                    <form id="upload-form" class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300">Upload a File</label>
-                            <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
-                        </div>
-                        <div class="text-center text-gray-400">OR</div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300">Add a Link</label>
-                            <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
-                            <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
-                        </div>
-                        <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
-                    </form>
-                    <div id="upload-message-box" class="mt-2 text-sm text-center"></div>
-                </div>
-
-                <!-- File List for All Members -->
                 <div class="mt-8">
                     <h2 class="text-2xl text-gray-300">File Database</h2>
-                    <div id="files-list" class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
+                    <div id="files-list" class="mt-4 h-[60vh] overflow-y-auto border border-gray-700 rounded-lg p-2 space-y-2">
                         <!-- Files will be populated here -->
                     </div>
                 </div>
@@ -159,23 +138,40 @@
         <section id="admin" class="page min-h-screen flex-col items-center justify-center p-4">
             <div class="w-full max-w-4xl bg-black/30 backdrop-blur-sm border border-yellow-500/20 rounded-lg p-8 z-20">
                 <h1 class="logo-font text-5xl text-yellow-300 text-glow text-center">Admin Panel</h1>
-                <div class="mt-8">
-                    <h2 class="text-2xl text-gray-300">Manage Registration Codes</h2>
-                    <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
-                    <div id="admin-message-box" class="mt-2 text-sm"></div>
-                    <div class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
-                        <table class="min-w-full">
-                            <thead class="sticky top-0 bg-gray-900">
-                                <tr>
-                                    <th class="p-2 text-left">Code</th>
-                                    <th class="p-2 text-left">Status</th>
-                                    <th class="p-2 text-left">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="codes-table-body">
-                                <!-- Codes will be populated here by JS -->
-                            </tbody>
-                        </table>
+                <div class="mt-8 grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl text-gray-300">Manage Registration Codes</h2>
+                        <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
+                        <div id="admin-message-box" class="mt-2 text-sm"></div>
+                        <div class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
+                            <table class="min-w-full">
+                                <thead class="sticky top-0 bg-gray-900">
+                                    <tr>
+                                        <th class="p-2 text-left">Code</th>
+                                        <th class="p-2 text-left">Status</th>
+                                        <th class="p-2 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="codes-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="upload-container" class="p-4 border border-purple-500/30 rounded-lg">
+                        <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
+                        <form id="upload-form" class="mt-4 space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300">Upload a File</label>
+                                <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
+                            </div>
+                            <div class="text-center text-gray-400">OR</div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-300">Add a Link</label>
+                                <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
+                                <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
+                            </div>
+                            <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
+                        </form>
+                        <div id="upload-message-box" class="mt-2 text-sm text-center"></div>
                     </div>
                 </div>
             </div>
@@ -188,7 +184,7 @@
             const REGISTRATION_WORKER_URL = 'https://broken-shaders-secure-auth.lolbiggerestlol.workers.dev';
             const LOGIN_WORKER_URL = 'https://brokenshaderslogin.lolbiggerestlol.workers.dev';
             const ADMIN_WORKER_URL = 'https://broken-shaders-admin-handler.lolbiggerestlol.workers.dev';
-            const FILE_WORKER_URL = 'https://broken-shaders-file-handler.lolbiggerestlol.workers.dev';
+            const FILE_WORKER_URL = 'https://bsadminfiles.lolbiggerestlol.workers.dev/';
             // ----------------------------------------------------
 
             const pages = document.querySelectorAll('.page');
@@ -282,7 +278,6 @@
                 logoutButton.classList.toggle('hidden', !isLoggedIn);
                 portalNavLink.classList.toggle('hidden', !isLoggedIn);
                 adminNavLink.classList.toggle('hidden', !isLoggedIn || !isAdmin);
-                document.getElementById('upload-container').classList.toggle('hidden', !isAdmin);
             }
 
             function logout() {
@@ -400,6 +395,21 @@
             const filesList = document.getElementById('files-list');
             const uploadMessageBox = document.getElementById('upload-message-box');
 
+            function renderFilePreview(file) {
+                const extension = file.fileName.split('.').pop().toLowerCase();
+                const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
+                
+                if (!file.isLink && imageExtensions.includes(extension)) {
+                    return `<img src="${file.fileURL}" alt="${file.fileName}" class="w-10 h-10 object-cover rounded-md mr-3">`;
+                }
+                
+                const iconPath = file.isLink 
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>' 
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>';
+
+                return `<div class="w-10 h-10 flex-shrink-0 flex items-center justify-center mr-3"><svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconPath}</svg></div>`;
+            }
+
             async function refreshFileList() {
                 if (!userToken) return;
                 const response = await fetch(`${FILE_WORKER_URL}?action=list`, {
@@ -409,11 +419,11 @@
                 if (result.success) {
                     filesList.innerHTML = result.files.map(file => `
                         <div class="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded">
-                            <a href="${file.fileURL}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3">
-                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">${file.isLink ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>'}</svg>
-                                <span>${file.fileName}</span>
+                            <a href="${file.fileURL}" target="_blank" rel="noopener noreferrer" class="flex items-center min-w-0">
+                                ${renderFilePreview(file)}
+                                <span class="truncate">${file.fileName}</span>
                             </a>
-                            ${isAdmin ? `<button class="delete-file-btn text-gray-500 hover:text-red-500" data-file-id="${file.id}" data-file-url="${file.fileURL}">Delete</button>` : ''}
+                            ${isAdmin ? `<button class="delete-file-btn text-gray-500 hover:text-red-500 flex-shrink-0 ml-4" data-file-id="${file.id}" data-file-url="${file.fileURL}">Delete</button>` : ''}
                         </div>
                     `).join('');
                 }
@@ -445,7 +455,6 @@
                     uploadMessageBox.textContent = result.message;
                     if (result.success) {
                         uploadForm.reset();
-                        refreshFileList();
                     }
                 });
             }
