@@ -136,11 +136,13 @@
 
         <!-- Admin Portal Page -->
         <section id="admin" class="page min-h-screen flex-col items-center justify-center p-4">
-            <div class="w-full max-w-4xl bg-black/30 backdrop-blur-sm border border-yellow-500/20 rounded-lg p-8 z-20">
+            <div class="w-full max-w-6xl bg-black/30 backdrop-blur-sm border border-yellow-500/20 rounded-lg p-8 z-20">
                 <h1 class="logo-font text-5xl text-yellow-300 text-glow text-center">Admin Panel</h1>
-                <div class="mt-8 grid md:grid-cols-2 gap-8">
-                    <div>
-                        <h2 class="text-2xl text-gray-300">Manage Registration Codes</h2>
+                <div class="mt-8 grid lg:grid-cols-3 gap-8">
+                    
+                    <!-- Code Management -->
+                    <div class="lg:col-span-1">
+                        <h2 class="text-2xl text-gray-300">Registration Codes</h2>
                         <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
                         <div id="admin-message-box" class="mt-2 text-sm"></div>
                         <div class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
@@ -156,23 +158,43 @@
                             </table>
                         </div>
                     </div>
-                    <div id="upload-container" class="p-4 border border-purple-500/30 rounded-lg">
-                        <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
-                        <form id="upload-form" class="mt-4 space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300">Upload a File</label>
-                                <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
-                            </div>
-                            <div class="text-center text-gray-400">OR</div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300">Add a Link</label>
-                                <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
-                                <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
-                            </div>
-                            <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
-                        </form>
-                        <div id="upload-message-box" class="mt-2 text-sm text-center"></div>
+
+                    <!-- User Management -->
+                    <div class="lg:col-span-2">
+                        <h2 class="text-2xl text-gray-300">User Management</h2>
+                        <div id="user-message-box" class="mt-2 text-sm"></div>
+                        <div class="mt-4 h-[28rem] overflow-y-auto border border-gray-700 rounded-lg p-2">
+                            <table class="min-w-full">
+                                <thead class="sticky top-0 bg-gray-900">
+                                    <tr>
+                                        <th class="p-2 text-left">Email</th>
+                                        <th class="p-2 text-left">Notes</th>
+                                        <th class="p-2 text-left">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body"></tbody>
+                            </table>
+                        </div>
                     </div>
+
+                </div>
+                 <!-- File Uploader -->
+                <div id="upload-container" class="mt-8 p-4 border border-purple-500/30 rounded-lg">
+                    <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
+                    <form id="upload-form" class="mt-4 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Upload a File</label>
+                            <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
+                        </div>
+                        <div class="text-center text-gray-400">OR</div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300">Add a Link</label>
+                            <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
+                            <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
+                        </div>
+                        <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
+                    </form>
+                    <div id="upload-message-box" class="mt-2 text-sm text-center"></div>
                 </div>
             </div>
         </section>
@@ -219,6 +241,8 @@
             const createCodeBtn = document.getElementById('create-code-btn');
             const codesTableBody = document.getElementById('codes-table-body');
             const adminMessageBox = document.getElementById('admin-message-box');
+            const usersTableBody = document.getElementById('users-table-body');
+            const userMessageBox = document.getElementById('user-message-box');
 
             async function refreshCodesList() {
                 const result = await secureFetch(ADMIN_WORKER_URL, 'LIST_CODES');
@@ -231,6 +255,24 @@
                             </td>
                             <td class="p-2">
                                 <button class="delete-code-btn text-gray-400 hover:text-red-500" data-code-id="${code.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            async function refreshUsersList() {
+                const result = await secureFetch(ADMIN_WORKER_URL, 'LIST_USERS');
+                if (result.success) {
+                    usersTableBody.innerHTML = result.users.map(user => `
+                        <tr class="align-top">
+                            <td class="p-2">${user.email}</td>
+                            <td class="p-2">
+                                <textarea class="user-notes-input w-full bg-gray-800 rounded p-1 text-sm" data-user-id="${user.id}">${user.notes || ''}</textarea>
+                            </td>
+                            <td class="p-2 space-y-2">
+                                <button class="save-notes-btn text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-user-id="${user.id}">Save</button>
+                                <button class="delete-user-btn text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-user-id="${user.id}">Delete</button>
                             </td>
                         </tr>
                     `).join('');
@@ -256,6 +298,27 @@
                             adminMessageBox.textContent = result.message;
                             if (result.success) {
                                 refreshCodesList();
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (usersTableBody) {
+                usersTableBody.addEventListener('click', async (e) => {
+                    const userId = e.target.dataset.userId;
+                    if (e.target.classList.contains('save-notes-btn')) {
+                        const notesTextarea = document.querySelector(`.user-notes-input[data-user-id="${userId}"]`);
+                        const notes = notesTextarea.value;
+                        const result = await secureFetch(ADMIN_WORKER_URL, 'UPDATE_USER_NOTES', { userId, notes });
+                        userMessageBox.textContent = result.message;
+                    }
+                    if (e.target.classList.contains('delete-user-btn')) {
+                        if (confirm('Are you sure you want to permanently delete this user? This cannot be undone.')) {
+                            const result = await secureFetch(ADMIN_WORKER_URL, 'DELETE_USER', { userId });
+                            userMessageBox.textContent = result.message;
+                            if (result.success) {
+                                refreshUsersList();
                             }
                         }
                     }
@@ -337,6 +400,7 @@
                 }
                 if (targetId === 'admin') {
                     refreshCodesList();
+                    refreshUsersList();
                 }
                 if (targetId === 'portal') {
                     refreshFileList();
@@ -397,14 +461,6 @@
             const uploadMessageBox = document.getElementById('upload-message-box');
 
             function renderFilePreview(file) {
-                const extension = file.fileName.split('.').pop().toLowerCase();
-                const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp'];
-                
-                if (!file.isLink && imageExtensions.includes(extension)) {
-                    // For private R2, we can't just link to the URL.
-                    // This space could be used for a placeholder or a future secure thumbnail fetcher.
-                }
-                
                 const iconPath = file.isLink 
                     ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>' 
                     : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>';
@@ -506,7 +562,6 @@
                             console.error('Download error:', error);
                             alert('Download failed. Please try again.');
                         } finally {
-                            // Re-render the button's original content
                             const file = { fileName: fileName, isLink: false };
                             downloadBtn.innerHTML = `${renderFilePreview(file)}<span class="truncate">${fileName}</span>`;
                         }
