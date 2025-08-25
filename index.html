@@ -138,36 +138,55 @@
         <section id="admin" class="page min-h-screen flex-col items-center justify-center p-4">
             <div class="w-full max-w-6xl bg-black/30 backdrop-blur-sm border border-yellow-500/20 rounded-lg p-8 z-20">
                 <h1 class="logo-font text-5xl text-yellow-300 text-glow text-center">Admin Panel</h1>
-                <div class="mt-8 grid lg:grid-cols-3 gap-8">
+                <div class="mt-8 grid lg:grid-cols-2 gap-8">
                     
-                    <!-- Code Management -->
-                    <div class="lg:col-span-1">
-                        <h2 class="text-2xl text-gray-300">Registration Codes</h2>
-                        <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
-                        <div id="admin-message-box" class="mt-2 text-sm"></div>
-                        <div class="mt-4 h-96 overflow-y-auto border border-gray-700 rounded-lg p-2">
-                            <table class="min-w-full">
-                                <thead class="sticky top-0 bg-gray-900">
-                                    <tr>
-                                        <th class="p-2 text-left">Code</th>
-                                        <th class="p-2 text-left">Status</th>
-                                        <th class="p-2 text-left">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="codes-table-body"></tbody>
-                            </table>
+                    <!-- Code & File Management Column -->
+                    <div class="space-y-8">
+                        <div>
+                            <h2 class="text-2xl text-gray-300">Registration Codes</h2>
+                            <button id="create-code-btn" class="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700">Create New Code</button>
+                            <div id="admin-message-box" class="mt-2 text-sm h-5"></div>
+                            <div class="mt-4 h-64 overflow-y-auto border border-gray-700 rounded-lg p-2">
+                                <table class="min-w-full">
+                                    <thead class="sticky top-0 bg-gray-900">
+                                        <tr>
+                                            <th class="p-2 text-left">Code</th>
+                                            <th class="p-2 text-left">Status</th>
+                                            <th class="p-2 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="codes-table-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="upload-container" class="p-4 border border-purple-500/30 rounded-lg">
+                            <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
+                            <form id="upload-form" class="mt-4 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300">Upload a File</label>
+                                    <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
+                                </div>
+                                <div class="text-center text-gray-400">OR</div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300">Add a Link</label>
+                                    <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
+                                    <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
+                                </div>
+                                <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
+                            </form>
+                            <div id="upload-message-box" class="mt-2 text-sm text-center h-5"></div>
                         </div>
                     </div>
 
-                    <!-- User Management -->
-                    <div class="lg:col-span-2">
+                    <!-- User Management Column -->
+                    <div>
                         <h2 class="text-2xl text-gray-300">User Management</h2>
-                        <div id="user-message-box" class="mt-2 text-sm"></div>
-                        <div class="mt-4 h-[28rem] overflow-y-auto border border-gray-700 rounded-lg p-2">
+                        <div id="user-message-box" class="mt-2 text-sm h-5"></div>
+                        <div class="mt-4 h-[40rem] overflow-y-auto border border-gray-700 rounded-lg p-2">
                             <table class="min-w-full">
                                 <thead class="sticky top-0 bg-gray-900">
                                     <tr>
-                                        <th class="p-2 text-left">Email</th>
+                                        <th class="p-2 text-left">User</th>
                                         <th class="p-2 text-left">Notes</th>
                                         <th class="p-2 text-left">Actions</th>
                                     </tr>
@@ -177,24 +196,6 @@
                         </div>
                     </div>
 
-                </div>
-                 <!-- File Uploader -->
-                <div id="upload-container" class="mt-8 p-4 border border-purple-500/30 rounded-lg">
-                    <h2 class="text-2xl text-gray-300">Upload a Resource</h2>
-                    <form id="upload-form" class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300">Upload a File</label>
-                            <input type="file" id="file-input" class="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-500/20 file:text-purple-300 hover:file:bg-purple-500/40"/>
-                        </div>
-                        <div class="text-center text-gray-400">OR</div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300">Add a Link</label>
-                            <input type="text" id="link-name-input" placeholder="Display Name (e.g., 'Cool Shader Tutorial')" class="mt-1 block w-full bg-gray-900/50 rounded-md p-2">
-                            <input type="url" id="link-url-input" placeholder="https://example.com/..." class="mt-2 block w-full bg-gray-900/50 rounded-md p-2">
-                        </div>
-                        <button type="submit" class="w-full py-2 px-4 bg-purple-600 rounded hover:bg-purple-700">Submit</button>
-                    </form>
-                    <div id="upload-message-box" class="mt-2 text-sm text-center"></div>
                 </div>
             </div>
         </section>
@@ -212,6 +213,7 @@
             const pages = document.querySelectorAll('.page');
             let userToken = sessionStorage.getItem('jwt');
             let isAdmin = false;
+            let isOwner = false;
 
             function parseJwt(token) {
                 if (!token) return null;
@@ -264,18 +266,32 @@
             async function refreshUsersList() {
                 const result = await secureFetch(ADMIN_WORKER_URL, 'LIST_USERS');
                 if (result.success) {
-                    usersTableBody.innerHTML = result.users.map(user => `
-                        <tr class="align-top">
-                            <td class="p-2">${user.email}</td>
-                            <td class="p-2">
-                                <textarea class="user-notes-input w-full bg-gray-800 rounded p-1 text-sm" data-user-id="${user.id}">${user.notes || ''}</textarea>
-                            </td>
-                            <td class="p-2 space-y-2">
-                                <button class="save-notes-btn text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-user-id="${user.id}">Save</button>
-                                <button class="delete-user-btn text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-user-id="${user.id}">Delete</button>
-                            </td>
-                        </tr>
-                    `).join('');
+                    usersTableBody.innerHTML = result.users.map(user => {
+                        let roleIcon = '';
+                        if (user.isOwner) roleIcon = '👑';
+                        else if (user.isAdmin) roleIcon = '🛡️';
+
+                        let canBeDeleted = true;
+                        if (user.isOwner) canBeDeleted = false;
+                        if (user.isAdmin && !isOwner) canBeDeleted = false;
+                        
+                        const deleteButton = canBeDeleted 
+                            ? `<button class="delete-user-btn text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-user-id="${user.id}">Delete</button>`
+                            : '';
+
+                        return `
+                            <tr class="align-top">
+                                <td class="p-2 whitespace-nowrap">${roleIcon} ${user.email}</td>
+                                <td class="p-2 w-full">
+                                    <textarea class="user-notes-input w-full bg-gray-800 rounded p-1 text-sm h-16" data-user-id="${user.id}">${user.notes || ''}</textarea>
+                                </td>
+                                <td class="p-2 space-y-2">
+                                    <button class="save-notes-btn text-xs bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded" data-user-id="${user.id}">Save</button>
+                                    ${deleteButton}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
             }
             
@@ -334,6 +350,7 @@
                 
                 const payload = parseJwt(userToken);
                 isAdmin = payload ? payload.isAdmin : false;
+                isOwner = payload ? payload.isOwner : false;
                 const isLoggedIn = !!payload;
 
                 registerNavLi.classList.toggle('hidden', isLoggedIn);
